@@ -1,0 +1,4 @@
+{% extends 'mailTemplate/templateMail.html.twig' %}
+
+{% block title %}Bonjour, {{ company.representativeLastname | upper }} {{ company.representativeFirstname | upper }}{% endblock %}
+{% block body %}<p>L'adhérent <b>{{ company.companyName | upper }}</b> a bien été transféré sur le compte <b>{{ nextUser.email }}</b></p>{% endblock %}

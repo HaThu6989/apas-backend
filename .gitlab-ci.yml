@@ -1,0 +1,100 @@
+variables:
+  ITEMS: "composer.json, composer.lock, config, .env, migrations, public, src, symfony.lock, templates, translations"
+
+stages:
+  - prepare
+  - quality
+  - test
+  - deploy
+  - cleanup
+
+install_composer:
+  stage: prepare
+  image: davidlpozi/devphp:php8.2-apache-node18-1.0.1
+  only:
+    - master
+  script:
+   - composer install
+  cache:
+    key: apas-composer-$CI_COMMIT_REF_SLUG
+    paths:
+      - vendor/
+
+
+linter:
+  needs:
+    - install_composer
+  stage: quality
+  image: davidlpozi/devphp:php8.2-apache-node18-1.0.1
+  only:
+    - master
+  script:
+   - ./vendor/bin/phpcs --standard=phpcs.xml ./src/
+  cache:
+    key: apas-composer-$CI_COMMIT_REF_SLUG
+    paths:
+      - vendor/
+  allow_failure:  true
+
+test_unit:
+  needs:
+    - install_composer
+  stage: test
+  image: davidlpozi/devphp:php8.2-apache-node18-1.0.1
+  only:
+    - master
+  script:
+    - php ./bin/phpunit tests/Unit
+  cache:
+    key: apas-composer-$CI_COMMIT_REF_SLUG
+    paths:
+      - vendor/
+  allow_failure:  true
+
+deploy:
+  stage: deploy
+  image: davidlpozi/devphp:php8.2-apache-node18-1.0.1
+  only:
+    - master
+  script:
+    - apt-get update
+    - apt-get install -y rsync openssh-client bash
+    - eval $(ssh-agent -s)
+    - bash -c 'ssh-add <(echo "$SSH_PRIVATE_KEY" | base64 -d)'
+    - |
+      ssh -p 3022 -o StrictHostKeyChecking=no 57876-30@gate.clicketcloud.com << 'ENDSSH'   
+      mkdir -p "/var/www/webroot/backup_api/api_backup_$(date +'%y%m%d%H%M')"
+      rsync -arz --delete /var/www/webroot/app/api/ /var/www/webroot/backup_api/api_backup_$(date +'%y%m%d%H%M')/
+      ENDSSH
+    - |
+      IFS=", "
+      for item in $ITEMS; do
+        if [ -d "./${item}" ]; then
+          rsync -avrz --delete -e "ssh -p 3022 -o StrictHostKeyChecking=no" ./${item}/  57876-30@gate.clicketcloud.com:/var/www/webroot/app/api/${item}/
+        else
+          rsync -avrz --delete -e "ssh -p 3022 -o StrictHostKeyChecking=no" ./${item}  57876-30@gate.clicketcloud.com:/var/www/webroot/app/api/${item}
+        fi  
+      done
+    - ssh -p 3022 -o StrictHostKeyChecking=no 57876-30@gate.clicketcloud.com "cd /var/www/webroot/app/api && composer install"
+    - ssh -p 3022 -o StrictHostKeyChecking=no 57876-30@gate.clicketcloud.com "cd /var/www/webroot/app/api && php bin/console cache:clear"
+    - ssh -p 3022 -o StrictHostKeyChecking=no 57876-30@gate.clicketcloud.com "cd /var/www/webroot/app/api && php bin/console doctrine:migrations:migrate --allow-no-migration --no-interaction"
+    - ssh -p 3022 -o StrictHostKeyChecking=no 57876-30@gate.clicketcloud.com "chown -R apache:apache /var/www/webroot/app/api"
+
+
+cleaanup:
+  stage: cleanup
+  image: davidlpozi/devphp:php8.2-apache-node18-1.0.1
+  only:
+    - master
+  needs:
+    - deploy
+  script:
+    - apt-get update
+    - apt-get install -y openssh-client bash
+    - eval $(ssh-agent -s)
+    - bash -c 'ssh-add <(echo "$SSH_PRIVATE_KEY" | base64 -d)'
+    - |
+      ssh -p 3022 -o StrictHostKeyChecking=no 57876-30@gate.clicketcloud.com << 'ENDSSH'   
+      cd /var/www/webroot/backup_api
+      ls -dt api_backup_* | tail -n +6 | xargs -d '\n' rm -rf
+      ENDSSH

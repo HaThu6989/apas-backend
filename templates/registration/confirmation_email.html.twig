@@ -1,0 +1,10 @@
+{% extends 'mailTemplate/templateMail.html.twig' %}
+
+{% block title %}Bonjour, {% endblock %}
+
+{% block body %} 
+    Pour finaliser l'inscription sur le site <b>adhesion.apas.asso.fr</b>, veuillez confirmer votre adresse e-mail en cliquant sur le lien suivant : <br><br>
+    <a href="{{ signedUrl|raw }}">Confirmer mon e-mail</a>.
+    Ce lien expirera dans {{ expiresAtMessageKey|trans(expiresAtMessageData, 'VerifyEmailBundle') }}.
+{% endblock %}
+

@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Facture</title>
+        <style>
+            @page {
+            size: A4;
+            margin: 0;
+            }
+            {# 
+            @media print {
+            html, body {
+                width: 210mm;
+                height: 297mm;
+            }
+            /* ... the rest of the rules ... */
+            } #}
+
+            {# A4 page according to wkhtmltopdf #}
+            body {
+             width: 280mm;
+             height: 396mm;   
+             font-size: 20px;
+            }
+
+            /* ===================================== */
+
+            .small_table_div {
+                width: 100%;
+                display: -webkit-box; /* wkhtmltopdf display: flex */
+                -webkit-box-pack: start; /* wkhtmltopdf justify-content: space-btwn */
+                overflow: auto;
+                margin-bottom: 50px;
+            }
+            .small_table_div table {
+                border: 2px solid #000000;
+                width: 100%;
+                table-layout: fixed;
+                border-collapse: collapse;
+                border-spacing: 1px;
+                text-align: center;
+            }
+            .small_table_div th {
+                border: 2px solid #000000;
+                color: #000000;
+                padding: 5px;
+            }
+            .small_table_div td {
+                border: 2px solid #000000;
+                color: #000000;
+                padding: 5px;
+            }
+
+            .main_table_div {
+                overflow: auto;
+                width: 100%;
+                margin-bottom: 50px;
+            }
+            .main_table_div table {
+                border: 2px solid #000000;
+                width: 100%;
+                table-layout: auto;
+                border-collapse: collapse;
+                border-spacing: 1px;
+                text-align: center;
+            }
+            .main_table_div th {
+                border: 2px solid #000000;
+                background-color: #b80c00;
+                color: #fdfcfc;
+                padding: 5px;
+            }
+            .main_table_div td {
+              /*  border: 3px solid #000000; */
+                background-color: #ffffff;
+                color: #000000;
+                padding: 10px;
+                border-right: solid 1px black; 
+                border-left: solid 1px black;
+            }
+
+            .total_div {
+                width: 100%;
+                display: -webkit-box; /* wkhtmltopdf display: flex */
+                -webkit-box-pack: end; /* wkhtmltopdf justify-content: space-btwn */
+                overflow: auto;
+                margin-bottom: 50px;
+            }
+            .total_div table {
+                border: 2px solid #000000;
+                width: 50%;
+                table-layout: fixed;
+                border-collapse: collapse;
+                border-spacing: 1px;
+                text-align: center;
+            }
+            .total_div th {
+                border: 2px solid #000000;
+                background-color: #b80c00;
+                color: #fdfcfc;
+                padding: 5px;
+            }
+            .total_div td {
+                border: 2px solid #000000;
+                background-color: #ffffff;
+                color: #000000;
+                padding: 5px;
+            }
+
+            /* ===================================== */
+
+            .table_footer td {
+                background-color: lightgrey;
+                border: 2px solid #000000;
+                font-weight: bold;
+                padding: 10px;
+            }
+            .page_div {
+                height: 100%;
+                -webkit-box-sizing: border-box;
+                display: -webkit-box; /* wkhtmltopdf display: flex */
+                -webkit-box-orient: vertical;
+                -webkit-box-pack: justify; /* wkhtmltopdf justify-content: space-btwn */
+            }
+
+            h1 {
+                font-weight: bold;
+                font-size: 40px;
+            }
+
+            h2 {
+                font-weight: bold;
+                font-size: 18px;
+            }
+
+            .header_div {
+                width: 100%;
+                display: -webkit-box; /* wkhtmltopdf display: flex */
+                -webkit-box-pack: justify; /* wkhtmltopdf justify-content: space-btwn */
+            /*   background-color: pink;  */
+                 margin-bottom: 50px;
+            }
+            .header_element_right {
+                margin-top: 20px;
+                min-width: 200px;
+            }
+            .header_line {
+                width: 100%;
+                display: -webkit-box; /* wkhtmltopdf display: flex */
+                -webkit-box-pack: justify; /* wkhtmltopdf justify-content: space-btwn */
+                white-space: nowrap;
+                margin: 0 0 5px 0;
+            }
+            .address_div {
+                width: 100%;
+                display: -webkit-box; /* wkhtmltopdf display: flex */
+                -webkit-box-pack: justify; /* wkhtmltopdf justify-content: space-btwn */
+                flex-direction: row;
+                align-items: center;
+                margin-bottom: 50px;
+                /* background-color: lime; */
+            }
+            ul {
+                list-style: none;
+                margin-right: 100px;
+            }
+            li {
+                margin: 0 0 5px 0;
+                white-space: nowrap;
+            }
+
+            .bottom_part {
+                border: 1px solid black;
+                padding: 10px;
+                font-size: 15px;
+                margin: 10px 0;
+            }
+
+            footer {
+                width: 100%;
+                 display: -webkit-box; /* wkhtmltopdf display: flex */
+                -webkit-box-orient: vertical;
+                -webkit-box-pack: center; /* wkhtmltopdf justify-content: space-btwn */
+                -webkit-box-align : center;
+            }
+            .footer_address_div,
+            .footer_title {
+                white-space: nowrap;
+            }
+
+            .bigger_font {
+                font-size: 24px;
+                font-weight: bold;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="page_div">
+            <div class="top-part">
+                <div class="header_div">
+                    <div class="header_element_left">
+                        <img 
+                            src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAN4AAAB4CAYAAACdIkxEAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyZpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuNi1jMTExIDc5LjE1ODMyNSwgMjAxNS8wOS8xMC0wMToxMDoyMCAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENDIDIwMTUgKFdpbmRvd3MpIiB4bXBNTTpJbnN0YW5jZUlEPSJ4bXAuaWlkOkQ4NzdCNjREQTVBRTExRTY4QTdFOUVGREM4RUY3Q0I4IiB4bXBNTTpEb2N1bWVudElEPSJ4bXAuZGlkOkQ4NzdCNjRFQTVBRTExRTY4QTdFOUVGREM4RUY3Q0I4Ij4gPHhtcE1NOkRlcml2ZWRGcm9tIHN0UmVmOmluc3RhbmNlSUQ9InhtcC5paWQ6RDg3N0I2NEJBNUFFMTFFNjhBN0U5RUZEQzhFRjdDQjgiIHN0UmVmOmRvY3VtZW50SUQ9InhtcC5kaWQ6RDg3N0I2NENBNUFFMTFFNjhBN0U5RUZEQzhFRjdDQjgiLz4gPC9yZGY6RGVzY3JpcHRpb24+IDwvcmRmOlJERj4gPC94OnhtcG1ldGE+IDw/eHBhY2tldCBlbmQ9InIiPz6eIpybAAAVnUlEQVR42uxd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" />
+                    </div>
+                    <div class="header_element_right">
+                        {# <div class="header_line" style="min-width: 250px;"><div class="bigger_font">Libellé&nbsp;:&nbsp;</div><div>ADH{{ company.membershipCode }} {{ declaration.inputedDate | date('Y m')}} {{ company.companyName }}</div></div> #}
+                        <div class="header_line"><div class="bigger_font"><span>Client&nbsp;:&nbsp;</span></div><div>ADH{{ company.membershipCode }}</div></div>
+                        <div class="header_line"><div class="bigger_font">Date&nbsp;:&nbsp;</div><div>{{ declaration.creationDate | date('d/m/Y')}}</div></div>
+                    </div>
+                </div>
+
+                <div class="address_div">
+                    <div><h1>FACTURE</h1></div>
+                    <ul>
+                        <li class="bigger_font">Adresse de facturation :</li>
+                        <li>{{ company.companyName }}</li>
+                        <li>{{ company.address1 }}</li>
+                        <li>{{ company.address2 }}</li>
+                        <li>{{ company.address3 }}</li>
+                        <li>{{ company.zipcode }} {{ company.city }}</li>
+                    </ul>
+                </div>
+            
+                <div class="small_table_div"tabindex="0">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>N° Pièce</th>
+                                <th>Client</th>
+                                <th>Date</th>
+                                <th>Catégorie APAS</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>{{ title }}</td>
+                                <td>ADH{{ company.membershipCode }}</td>
+                                <td>{{ declaration.creationDate | date('d/m/Y') }}</td>
+                                <td>{{ declaration.membershipCategory }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="main_table_div" tabindex="0">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Désignation</th>
+                                <th>Montant HT</th>
+                                <th>TVA</th>
+                                <th>Montant TTC</th>
+                                <th>Taux TVA</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Cotisation Cadres</td>
+                                <td>{{ data.feeExecutiveLocale }}</td>
+                                <td>{{ data.tvaExecutiveLocale }}</td>
+                                <td>{{ data.ttcExecutiveLocale }}</td>
+                                <td>{{ tvaPercents.executive }}</td>
+                            </tr>
+                            <tr>
+                                <td>Cotisation ETAM :</td>
+                                <td>{{ data.feeEtamLocale }}</td>
+                                <td>{{ data.tvaEtamLocale }}</td>
+                                <td>{{ data.ttcEtamLocale }}</td>
+                                <td>{{ tvaPercents.etam }}</td>
+                            </tr>
+                            <tr>
+                                <td>Cotisation Ouvriers :</td>
+                                <td>{{ data.feeWorkerLocale }}</td>
+                                <td>{{ data.tvaWorkerLocale }}</td>
+                                <td>{{ data.ttcWorkerLocale }}</td>
+                                <td>{{ tvaPercents.worker }}</td>
+                            </tr>
+                            <tr>
+                                <td>Période de déclaration : {{ declaration.inputedDate | date('m Y')}}</td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td>Taux de cotisation : 0,4%</td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                            </tr>
+                            <tr class="table_footer">
+                                <td>Total Cotisation :</td>
+                                <td>{{ data.totalHTLocale }}</td>
+                                <td>{{ data.totalTvaLocale }}</td>
+                                <td>{{ data.feeAmountLocale }}</td>
+                                <td></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="total_div" tabindex="0">
+                    <table>
+                        <tbody>
+                            <tr>
+                                <td>Montant HT</td>
+                                <td>{{ data.totalHTLocale }}</td>
+                            </tr>
+                            <tr>
+                                <td>Montant TVA</td>
+                                <td>{{ data.totalTvaLocale }}</td>
+                            </tr>
+                            <tr>
+                                <td>Montant TTC</td>
+                                <td>{{ data.feeAmountLocale }}</td>
+                            </tr>
+                            <tr class="table_footer">
+                                <td>Net à payer</td>
+                                <td>{{ data.feeAmountLocale }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="bottom_part">
+                <h2>Conditions et modalités de paiement :</h2>
+                <p>
+                {# <br /> #}
+                <u>Paiement par virement :</u><br />
+                Veuillez adresser votre virement :<br />
+                IBAN : FR76 3006 6105 7100 0105 0452 089<br />
+                Libellé : {{ title }}<br />
+                <br />
+                <u>Paiement par CB :</u><br />
+                Veuillez vous connecter sur https://adhesion.apas.asso.fr  pour le règlement.<br />
+                <br />
+                La facture doit être payée dans un délai de 30 jours après sa date d'émission.<br />
+                Tout incident de paiement est passible d'intérêt de retard. Le montant des pénalités de retard résulte de l'application aux sommes restant dues d'un taux d'intérêt légal en vigueur au moment de l'incident.<br />
+                <br />
+                Indemnité forfaitaire pour frais de recouvrement : 40 €.<br />
+                Escompte pour paiement anticipé : Néant.
+                </p>
+            </div>
+            <footer>
+                <div class="footer_title" style="font-size: 18px;">Association Paritaire d'Action Sociale du Bâtiment et des Travaux Publics</div>
+                <div class="footer_address_div" style="font-size: 17px;">Siège social : 14-18, rue de la Vanne - 92120 MONTROUGE - Tél. 01 84 990 990 - www.apas.asso.fr</div>
+                <div class="footer_info_div" style="font-size: 14px; text-align: justify;">Garant : Atradius : 44 avenue Georges Pompidou 92596 Levallois-Perret cedex  - Assureur : MMA : 14 bd Marie & Alexandre Oyon 72030 Le Mans Cedex 9</div>
+                <div class="footer_info_div" style="font-size: 14px; text-align: justify;">N° SIRET : 775 682 313 00520 -  APE : 6619B  -  Immatriculation ATOUT France N° IMO75110023 - No TVA Intracommunautaire : FR94807712690</div>
+            </footer>
+        </div>
+    </body>
+</html>

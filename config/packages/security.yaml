@@ -1,0 +1,52 @@
+security:
+    password_hashers:
+        Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: 'auto'
+
+    providers:
+        user_provider:
+            entity:
+                class: App\Entity\User
+
+    firewalls:
+        dev:
+            pattern: ^/(_(profiler|wdt)|css|images|js)/
+            security: false
+        jwt_login:
+            provider: user_provider
+            pattern: ^/api/login/json
+            stateless: true
+            context: main
+            json_login:
+                check_path: /api/login/json
+                success_handler: lexik_jwt_authentication.handler.authentication_success
+                failure_handler: lexik_jwt_authentication.handler.authentication_failure
+        main:
+            context: main_context
+            stateless: false
+            entry_point: App\Security\AuthenticationEntryPoint
+            json_login:
+                provider: user_provider
+                username_path: username
+                password_path: password
+                login_path: api_form_login
+                check_path: api_form_login
+            jwt:
+                provider: user_provider
+                authenticator: lexik_jwt_authentication.security.jwt_authenticator
+            logout:
+                path: api_form_logout
+
+    access_control:
+        - { path: ^/api/login$, roles: PUBLIC_ACCESS }
+        - { path: ^/api/login/json$, roles: PUBLIC_ACCESS }
+        - { path: ^/api/login/identifier$, roles: PUBLIC_ACCESS }
+        - { path: ^/api/register/verify/change/email$, roles: PUBLIC_ACCESS }
+        - { path: ^/api/register$, roles: PUBLIC_ACCESS }
+        - { path: ^/api/register/verify/email$, roles: PUBLIC_ACCESS }
+        - { path: ^/api/register/verify/password$, roles: PUBLIC_ACCESS }
+        - { path: ^/api/reset-password, roles: PUBLIC_ACCESS }
+        - { path: ^/api/processOrder$, roles: PUBLIC_ACCESS }
+        - { path: ^/api/processOrder-test$, roles: PUBLIC_ACCESS }
+        - { path: ^/, roles: IS_AUTHENTICATED_FULLY }
+        
+
