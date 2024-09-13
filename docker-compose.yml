@@ -1,0 +1,56 @@
+version: "3.3"
+
+services:
+  phpmyadmin_dev:
+    image: phpmyadmin:latest
+    restart: always
+    ports:
+      - 8082:80
+    environment:
+      PMA_HOST: mysql_dev
+      MYSQL_ROOT_PASSWORD: htran
+      MYSQL_USER: htran
+    networks:
+      - htran_network
+    depends_on:
+      - mysql_dev
+
+  mysql_dev:
+    image: mysql:8.4
+    container_name: mysql_dev
+    restart: always
+    volumes:
+      - apas_dev_db:/var/lib/mysql
+      # - ./apas_form.sql:/docker-entrypoint-initdb.d/export_sql.sql
+    environment:
+      MYSQL_DATABASE: apas_form
+      MYSQL_USER: htran
+      MYSQL_PASSWORD: htran
+      MYSQL_ROOT_PASSWORD: htran
+    ports:
+      - 3307:3306
+    networks:
+      - htran_network
+    expose:
+      - 3306
+
+  symfony:
+    build:
+      context: .
+    container_name: symfony_app
+    ports:
+      - "8080:80"
+    volumes:
+      - .:/var/www/html
+    environment:
+      - SYMFONY_ENV=dev
+    depends_on:
+      - mysql_dev
+    networks:
+      - htran_network
+
+volumes:
+  apas_dev_db:
+
+networks:
+  htran_network:
